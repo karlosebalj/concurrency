@@ -1,7 +1,7 @@
 #include <iostream>
 #include <thread>
 
-#define ITERATION_CYCLE 50
+#define ITERATION_CYCLE 10
 
 // 1. function pointer
 // 2. function object
@@ -33,23 +33,31 @@ public:
     }
 };
 
+class ThreadRAII 
+{
+public:
+    ThreadRAII(std::thread& thread) : _thread(thread) 
+    {};
+    ~ThreadRAII()
+    {
+        if (_thread.joinable())
+        {
+            _thread.detach();
+        }
+    };
+private: 
+    std::thread & _thread;
+};
 
 int main()
 {   
-    std::thread first(displayThread);
-    std::thread second(displayThread);
+    std::thread threadObject(displayThread);
+    
+    ThreadRAII* wrapper = new ThreadRAII(threadObject);
 
-    if (second.joinable())
-    {
-       second.detach(); 
-    }
+    delete wrapper;
 
-    if (second.joinable())
-    {
-       second.join(); 
-    }
-
-    // first.join();
-    // second.join();
+    std::cout << "Thread wrapper is destroied!" << std::endl; 
+    
     std::cin.get();
 }

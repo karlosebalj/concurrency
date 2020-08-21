@@ -1,63 +1,46 @@
 #include <iostream>
 #include <thread>
+#include <string>
 
 #define ITERATION_CYCLE 10
 
-// 1. function pointer
-// 2. function object
-// 3. Lambda functions
-
-void displayThread()
+void displayThreadData(int num, std::string message)
 {
-    for (size_t i = 0; i < ITERATION_CYCLE; i++)
+    std::cout << "Thread number: " << num << std::endl;
+    std::cout << message << std::endl;
+}
+
+// Napraviti funkciju koja prima referencu na broj, te taj isti broj uvećavati 1000x for petlja <1000 num++
+// Ispisati broj u svakoj iteraciji for petlje skupa sa ID-em od threada 
+// Napraviti 2 threada koja primaju istu referencu!
+
+void threadMultipiler(int& number) 
+{
+    for (int i = 0; i < 100000; i++)
     {
-        std::cout << "Worker with id: " << std::this_thread::get_id() << " is executing!" << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::cout << "Number value is: " << number << " and ID: " << std::this_thread::get_id() << std::endl;
+        number++;
     }
 }
 
-
-
-// 2. Function Object 
-class DisplayThread
-{
-public:
-    void operator()()
-    {
-        for (size_t i = 0; i < ITERATION_CYCLE; i++)
-        {
-            std::cout << "I am a object Thread!" << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }
-    }
-};
-
-class ThreadRAII 
-{
-public:
-    ThreadRAII(std::thread& thread) : _thread(thread) 
-    {};
-    ~ThreadRAII()
-    {
-        if (_thread.joinable())
-        {
-            _thread.detach();
-        }
-    };
-private: 
-    std::thread & _thread;
-};
-
+// std::thread threadObject(function, params);
 int main()
 {   
-    std::thread threadObject(displayThread);
-    
-    ThreadRAII* wrapper = new ThreadRAII(threadObject);
+    // std::thread threadWithParams(displayThreadData, 10, "Hello thread!");
 
-    delete wrapper;
+    // threadWithParams.join();
 
-    std::cout << "Thread wrapper is destroied!" << std::endl; 
-    
+    int number = 0; 
+    // auto threadFirst = std::thread(threadMultipiler, std::ref(number));
+    // auto threadSecond = std::thread(threadMultipiler, std::ref(number));
+
+    std::thread threadFirst(threadMultipiler, std::ref(number));
+    std::thread threadSecond(threadMultipiler, std::ref(number));
+
+    threadFirst.join();
+    threadSecond.join();
+
+    std::cout  << "Final result: " << number << std::endl;
+
     std::cin.get();
 }

@@ -1,46 +1,65 @@
 #include <iostream>
 #include <thread>
 #include <string>
+#include <vector>
+#include <mutex>
 
-#define ITERATION_CYCLE 10
+#define THREAD_COUNT 5
+#define COUNT 100
 
-void displayThreadData(int num, std::string message)
+class Wallet
 {
-    std::cout << "Thread number: " << num << std::endl;
-    std::cout << message << std::endl;
-}
-
-// Napraviti funkciju koja prima referencu na broj, te taj isti broj uvećavati 1000x for petlja <1000 num++
-// Ispisati broj u svakoj iteraciji for petlje skupa sa ID-em od threada 
-// Napraviti 2 threada koja primaju istu referencu!
-
-void threadMultipiler(int& number) 
-{
-    for (int i = 0; i < 100000; i++)
+public:
+    Wallet() : _ballance(0) {};
+    ~Wallet() {};
+    void addToBallance(int ammount)
     {
-        std::cout << "Number value is: " << number << " and ID: " << std::this_thread::get_id() << std::endl;
-        number++;
+        _mutex.lock();
+        for (int i = 0; i < ammount; i++)
+        {
+            _ballance++;
+            std::cout << "Thread: " << std::this_thread::get_id() << " Current Ballance: " << _ballance << std::endl; 
+        }
+        _mutex.unlock();
     }
+
+    int getBallance()
+    {
+        return _ballance;
+    }
+private:
+    int _ballance;
+    std::mutex _mutex;   
+};
+
+int multithreadedWallet()
+{
+    Wallet wallet;
+    std::vector<std::thread> threads;
+    for (int i = 0; i < THREAD_COUNT; i++)
+    {
+        threads.push_back(std::thread(&Wallet::addToBallance, &wallet, COUNT));
+    }
+
+    for (int i = 0; i < threads.size(); i++)
+    {
+        threads[i].join();
+    }
+    return wallet.getBallance();
 }
 
-// std::thread threadObject(function, params);
 int main()
 {   
-    // std::thread threadWithParams(displayThreadData, 10, "Hello thread!");
+    int value = 0;
+    for (int i = 0; i < COUNT; i++)
+    {   
+        // value = multithreadedWallet();
+        if ((value = multithreadedWallet()) != COUNT * THREAD_COUNT)
+        {
+            std::cout << "error at: " << i << " Current Ballance: " << value << std::endl;
+        }
+    }
 
-    // threadWithParams.join();
-
-    int number = 0; 
-    // auto threadFirst = std::thread(threadMultipiler, std::ref(number));
-    // auto threadSecond = std::thread(threadMultipiler, std::ref(number));
-
-    std::thread threadFirst(threadMultipiler, std::ref(number));
-    std::thread threadSecond(threadMultipiler, std::ref(number));
-
-    threadFirst.join();
-    threadSecond.join();
-
-    std::cout  << "Final result: " << number << std::endl;
-
+    std::cout << "Final result: " << value << std::endl;
     std::cin.get();
 }
